@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="obsidian">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Link Saver App - Secure Personal Vault and Link Manager</title>
+    
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Link Saver App - Ultra-secure, offline-first personal link saver and encrypted vault for Web links, Social links, Crypto Wallet secret recovery phrases, and Passwords. 100% local browser privacy.">
+    <meta name="author" content="Farrukh Barlas & AFU Webs">
+    <meta name="theme-color" content="#0d0f1d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- PWA Manifest & Favicon -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/jpeg" href="./assets/images/logo.jpg">
+    <link rel="apple-touch-icon" href="./assets/images/logo.jpg">
+
+    <!-- Web Fonts & FontAwesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+
+    <!-- Background Ambient Glow Orbs -->
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ==========================================================================
+         1. LOCK SCREEN (PIN SECURITY)
+         ========================================================================== -->
+    <div id="lock-screen" class="lock-wrapper">
+        <div id="pin-container" class="lock-card">
+            <div class="app-brand-lock">
+                <img src="./assets/images/logo.jpg" alt="Link Saver App Logo" class="brand-logo-img">
+                <h1 class="brand-title">Link Saver App</h1>
+                <p class="brand-subtitle">Enter PIN to Unlock Vault</p>
+            </div>
+
+            <!-- PIN Input Display -->
+            <div class="pin-display-wrapper">
+                <input type="password" id="pin-display" class="hidden" maxlength="6" readonly>
+                <div class="pin-dots">
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                </div>
+            </div>
+
+            <!-- Touch Keypad Grid -->
+            <div class="keypad-grid">
+                <button class="key-btn" onclick="AppUI.appendPinDigit('1')">1</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('2')">2</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('3')">3</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('4')">4</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('5')">5</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('6')">6</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('7')">7</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('8')">8</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('9')">9</button>
+                <button class="key-btn key-btn-action" onclick="AppUI.resetPinInput()" title="Clear">C</button>
+                <button class="key-btn" onclick="AppUI.appendPinDigit('0')">0</button>
+                <button class="key-btn key-btn-action" onclick="AppUI.backspacePinDigit()" title="Backspace"><i class="fas fa-backspace"></i></button>
+            </div>
+
+            <button class="btn btn-primary margin-top-md" style="width: 100%; justify-content: center;" onclick="AppUI.submitPrimaryPin()">
+                <i class="fas fa-unlock"></i> Unlock Vault
+            </button>
+
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 16px;">
+                Default PIN: <strong style="color: var(--accent-cyan);">123456</strong> (Change anytime in settings)
+            </p>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         2. MAIN APPLICATION UI
+         ========================================================================== -->
+    <div id="main-app" class="app-container hidden">
+        
+        <!-- Header Bar -->
+        <header class="app-header">
+            <div class="header-brand">
+                <img src="./assets/images/logo.jpg" alt="AFU Logo" class="header-logo">
+                <div>
+                    <h2 class="header-title">Link Saver App</h2>
+                    <span style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 500;">
+                        <i class="fas fa-shield-alt"></i> 100% Local Browser Privacy
+                    </span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-pwa-install" class="btn btn-sm btn-secondary" style="display: none;">
+                    <i class="fas fa-download"></i> Install App
+                </button>
+                <button class="icon-btn" onclick="AppUI.closeModal(''); document.getElementById('modal-settings').classList.remove('hidden');" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="icon-btn" onclick="AppUI.lockApp('Vault Locked')" title="Lock App">
+                    <i class="fas fa-lock"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs (Desktop & Tablet) -->
+        <nav class="nav-tabs nav-tabs-desktop">
+            <button class="nav-tab-btn active" data-tab="weblinks" onclick="AppUI.switchTab('weblinks')">
+                <i class="fas fa-globe"></i> Web Links
+            </button>
+            <button class="nav-tab-btn" data-tab="sociallinks" onclick="AppUI.switchTab('sociallinks')">
+                <i class="fas fa-share-alt"></i> Social Links
+            </button>
+            <button class="nav-tab-btn" data-tab="cryptowallets" onclick="AppUI.switchTab('cryptowallets')">
+                <i class="fas fa-wallet"></i> Crypto Wallets
+            </button>
+            <button class="nav-tab-btn" data-tab="passwords" onclick="AppUI.switchTab('passwords')">
+                <i class="fas fa-user-shield"></i> Passwords Vault
+            </button>
+        </nav>
+
+        <!-- Search & Action Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" class="search-input" placeholder="Search links, usernames, titles...">
+            </div>
+            <button class="btn btn-primary" onclick="AppUI.openAddModal()">
+                <i class="fas fa-plus"></i> Add New Record
+            </button>
+        </div>
+
+        <!-- Dynamic Content Listing -->
+        <main id="content-list"></main>
+
+        <!-- Mobile Fixed Bottom Navigation -->
+        <div class="mobile-bottom-nav">
+            <nav class="nav-tabs">
+                <button class="nav-tab-btn active" data-tab="weblinks" onclick="AppUI.switchTab('weblinks')">
+                    <i class="fas fa-globe"></i>
+                    <span>Web Links</span>
+                </button>
+                <button class="nav-tab-btn" data-tab="sociallinks" onclick="AppUI.switchTab('sociallinks')">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Social</span>
+                </button>
+                <button class="nav-tab-btn" data-tab="cryptowallets" onclick="AppUI.switchTab('cryptowallets')">
+                    <i class="fas fa-wallet"></i>
+                    <span>Crypto</span>
+                </button>
+                <button class="nav-tab-btn" data-tab="passwords" onclick="AppUI.switchTab('passwords')">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Vault</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Farrukh Barlas & AFU Webs. All Rights Reserved.</p>
+            <div class="footer-links">
+                <span class="footer-link" onclick="document.getElementById('modal-privacy').classList.remove('hidden')">Privacy Policy</span>
+                <span>•</span>
+                <span class="footer-link" onclick="document.getElementById('modal-terms').classList.remove('hidden')">Terms & Conditions</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ==========================================================================
+         3. MODALS
+         ========================================================================== -->
+
+    <!-- Modal: Add / Edit Web Link -->
+    <div id="modal-weblink" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-weblink-title">Add Web Link</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-weblink')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-weblink">
+                <input type="hidden" id="weblink-id">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="weblink-title" class="form-control" placeholder="e.g. Google Search" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Website URL</label>
+                    <input type="url" id="weblink-url" class="form-control" placeholder="https://example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category / Tag</label>
+                    <input type="text" id="weblink-category" class="form-control" placeholder="e.g. Work, News, Tools">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="weblink-notes" class="form-control" placeholder="Additional details..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="AppUI.closeModal('modal-weblink')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add / Edit Social Link -->
+    <div id="modal-sociallink" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-sociallink-title">Add Social Link</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-sociallink')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-sociallink">
+                <input type="hidden" id="sociallink-id">
+                <div class="form-group">
+                    <label class="form-label">Title / Label</label>
+                    <input type="text" id="sociallink-title" class="form-control" placeholder="e.g. My Twitter Profile" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Platform</label>
+                    <select id="sociallink-platform" class="form-control">
+                        <option value="Twitter">Twitter / X</option>
+                        <option value="GitHub">GitHub</option>
+                        <option value="LinkedIn">LinkedIn</option>
+                        <option value="YouTube">YouTube</option>
+                        <option value="Telegram">Telegram</option>
+                        <option value="Discord">Discord</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Handle or Profile URL</label>
+                    <input type="text" id="sociallink-handle" class="form-control" placeholder="@username or https://..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="sociallink-notes" class="form-control" placeholder="Notes..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="AppUI.closeModal('modal-sociallink')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Social Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add / Edit Crypto Wallet -->
+    <div id="modal-cryptowallet" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-cryptowallet-title">Add Crypto Wallet</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-cryptowallet')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-cryptowallet">
+                <input type="hidden" id="cryptowallet-id">
+                <div class="form-group">
+                    <label class="form-label">Wallet Label</label>
+                    <input type="text" id="cryptowallet-title" class="form-control" placeholder="e.g. MetaMask Main Wallet" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Network / Blockchain</label>
+                    <input type="text" id="cryptowallet-network" class="form-control" placeholder="e.g. Ethereum, Solana, Bitcoin">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Public Address (Optional)</label>
+                    <input type="text" id="cryptowallet-address" class="form-control font-mono" placeholder="0x...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-lock" style="color: var(--accent-cyan);"></i> Secret Seed Phrase / Private Key (Encrypted)</label>
+                    <textarea id="cryptowallet-secret" class="form-control font-mono" placeholder="12 or 24 secret recovery words..." required></textarea>
+                    <span style="font-size: 0.75rem; color: var(--accent-emerald);">
+                        <i class="fas fa-shield-alt"></i> AES-256 Encrypted locally using your Vault PIN
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="cryptowallet-notes" class="form-control" placeholder="Notes..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="AppUI.closeModal('modal-cryptowallet')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Encrypted Wallet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add / Edit Password -->
+    <div id="modal-password" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-password-title">Add Password Record</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-password')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-password">
+                <input type="hidden" id="password-id">
+                <div class="form-group">
+                    <label class="form-label">Account / Service Name</label>
+                    <input type="text" id="password-title" class="form-control" placeholder="e.g. Gmail / Amazon / Bank" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username / Email</label>
+                    <input type="text" id="password-username" class="form-control" placeholder="user@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Website URL (Optional)</label>
+                    <input type="url" id="password-url" class="form-control" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="form-label"><i class="fas fa-key" style="color: var(--accent-cyan);"></i> Password (Encrypted)</label>
+                        <button type="button" id="btn-gen-pass" class="btn-mini" style="color: var(--accent-cyan);">
+                            <i class="fas fa-magic"></i> Generate Strong
+                        </button>
+                    </div>
+                    <input type="text" id="password-secret" class="form-control font-mono" placeholder="Password..." required>
+                    <span style="font-size: 0.75rem; color: var(--accent-emerald);">
+                        <i class="fas fa-shield-alt"></i> AES-256 Encrypted locally using your Vault PIN
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes / Security Questions (Optional)</label>
+                    <textarea id="password-notes" class="form-control" placeholder="Security Q&A, pin, recovery notes..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="AppUI.closeModal('modal-password')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Encrypted Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Vault PIN Authorization Gate -->
+    <div id="vault-pin-modal" class="modal-wrapper hidden">
+        <div class="modal-content" style="max-width: 380px; text-align: center;">
+            <div style="font-size: 2.5rem; color: var(--accent-amber); margin-bottom: 12px;">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h3 class="modal-title" style="justify-content: center; margin-bottom: 8px;">Vault Authorization</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+                Enter your unique Vault PIN to unlock Passwords & Secrets.
+            </p>
+            <div class="form-group">
+                <input type="password" id="vault-pin-input" class="form-control" style="text-align: center; font-size: 1.5rem; letter-spacing: 6px;" maxlength="6" placeholder="••••••">
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px;">
+                Default Vault PIN: <strong style="color: var(--accent-amber);">654321</strong>
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="btn-cancel-vault-pin" class="btn btn-secondary" style="flex: 1; justify-content: center;">Cancel</button>
+                <button type="button" id="btn-submit-vault-pin" class="btn btn-primary" style="flex: 1; justify-content: center;">Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Settings & Customization -->
+    <div id="modal-settings" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-cog"></i> Security & App Settings</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-settings')"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Appearance Theme -->
+            <div style="margin-bottom: 24px;">
+                <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; color: var(--accent-cyan);">
+                    <i class="fas fa-palette"></i> Appearance Theme
+                </h4>
+                <select id="theme-select" class="form-control" onchange="AppUI.applyTheme(this.value)">
+                    <option value="obsidian">Obsidian Glass (Default Dark)</option>
+                    <option value="cyberpunk">Cyberpunk Neon</option>
+                    <option value="emerald">Emerald Vault</option>
+                    <option value="light">Minimal Light</option>
+                </select>
+            </div>
+
+            <!-- Primary PIN Change -->
+            <form id="form-change-pin" style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--border-glass);">
+                <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; color: var(--accent-cyan);">
+                    <i class="fas fa-key"></i> Change Primary App PIN
+                </h4>
+                <div class="form-group">
+                    <input type="password" id="curr-pin" class="form-control" placeholder="Current PIN (Default: 123456)" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <input type="password" id="new-pin" class="form-control" placeholder="New 6-digit PIN" maxlength="6" required>
+                    <input type="password" id="conf-pin" class="form-control" placeholder="Confirm New PIN" maxlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-sm btn-secondary"><i class="fas fa-save"></i> Update Primary PIN</button>
+            </form>
+
+            <!-- Vault PIN Change -->
+            <form id="form-change-vault-pin" style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--border-glass);">
+                <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; color: var(--accent-amber);">
+                    <i class="fas fa-user-shield"></i> Change Vault PIN (Passwords & Secrets)
+                </h4>
+                <div class="form-group">
+                    <input type="password" id="curr-vault-pin" class="form-control" placeholder="Current Vault PIN (Default: 654321)" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <input type="password" id="new-vault-pin" class="form-control" placeholder="New Vault PIN" maxlength="6" required>
+                    <input type="password" id="conf-vault-pin" class="form-control" placeholder="Confirm Vault PIN" maxlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-sm btn-warning"><i class="fas fa-shield-alt"></i> Update Vault PIN</button>
+            </form>
+
+            <!-- Backup & Restore -->
+            <div style="padding-top: 16px; border-top: 1px solid var(--border-glass);">
+                <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; color: var(--accent-cyan);">
+                    <i class="fas fa-file-export"></i> Backup & Data Management
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+                    Export your encrypted JSON backup or restore data onto another device.
+                </p>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" id="btn-export-backup" class="btn btn-sm btn-primary">
+                        <i class="fas fa-download"></i> Export Backup
+                    </button>
+                    <label class="btn btn-sm btn-secondary" style="cursor: pointer;">
+                        <i class="fas fa-upload"></i> Restore Backup
+                        <input type="file" id="file-import-backup" accept=".json" style="display: none;">
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; text-align: right;">
+                <button type="button" class="btn btn-secondary" onclick="AppUI.closeModal('modal-settings')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Privacy Policy -->
+    <div id="modal-privacy" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-user-secret"></i> Privacy Policy</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-privacy')"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
+                <p style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">100% Zero-Server Data Guarantee</strong></p>
+                <p style="margin-bottom: 12px;">Link Saver App operates strictly on an offline-first client architecture. All your saved web links, social links, crypto wallet recovery phrases, and passwords remain 100% inside your device's browser local storage (`localStorage`).</p>
+                <p style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">Encryption & Security</strong></p>
+                <p style="margin-bottom: 12px;">Sensitive information such as crypto recovery phrases and passwords are encrypted using Web Crypto API 256-bit AES-GCM encryption with PBKDF2 key derivation derived directly from your personal PIN.</p>
+                <p style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">No Analytics, No Tracking, No Cloud Sync</strong></p>
+                <p>We do not collect telemetry, IP addresses, cookies, or personal identifier data. You retain total control over your encrypted local backups.</p> <p>contact@barlas.fr.eu.org</p>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-primary" onclick="AppUI.closeModal('modal-privacy')">I Understand</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Terms & Conditions -->
+    <div id="modal-terms" class="modal-wrapper hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-file-contract"></i> Terms & Conditions</h3>
+                <button class="icon-btn" onclick="AppUI.closeModal('modal-terms')"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
+                <p style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">Local Data & Backup Responsibility</strong></p>
+                <p style="margin-bottom: 12px;">Because Link Saver App stores all data locally in your browser without sending any copy to external servers, you are solely responsible for keeping backups of your PIN and data. Clearing your browser storage without a JSON backup will erase local records.</p>
+                <p style="margin-bottom: 12px;"><strong style="color: var(--text-primary);">Copyright & Attribution</strong></p>
+                <p style="margin-bottom: 12px;">Link Saver App, branding, design system, and source code are copyrighted by Farrukh Barlas & AFU Webs (&copy; 2026).</p>
+                <p><strong style="color: var(--text-primary);">Limitation of Liability</strong></p>
+                <p>Link Saver App is provided "as-is" without warranty of any kind. Users are advised to regularly export encrypted backups for safeguarding sensitive data.</p>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-primary" onclick="AppUI.closeModal('modal-terms')">Accept & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Scripts -->
+    <script src="./assets/js/crypto.js"></script>
+    <script src="./assets/js/storage.js"></script>
+    <script src="./assets/js/ui.js"></script>
+    <script src="./assets/js/pwa.js"></script>
+    <script src="./assets/js/app.js"></script>
+</body>
+</html>
