@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.netlify.afulinksaverapp.twa",
+        "sha256_cert_fingerprints": ["D2:ED:51:36:AE:82:70:9B:F3:E9:24:29:03:58:85:39:68:8D:C0:73:F5:BD:42:56:CE:76:F3:EE:5F:0A:1B:18"]
+      }
+    }]
